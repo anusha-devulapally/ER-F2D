@@ -34,8 +34,6 @@ CUDA_VISIBLE_DEVICES=0 python test.py --path_to_model experiments/exp_5_rgb/chec
 ```
 Later, we run evaluation.py script takes both the groundtruth and prediction output as inputs, and calculates the metric depth on logarithmic depth maps using both clip distance and reg_factor. 
 ```bash
-python evaluation.py --target_dataset experiments/exp_5_rgb/test/ground_truth/npy/gt/ --predictions_dataset experiments/exp_5_rgb/test/npy/depth/ --clip_distance 80 --reg_factor 3.70378
+python evaluation.py --target_dataset experiments/exp_1/test/ground_truth/npy/gt/ --predictions_dataset experiments/exp_1/test/npy/depth/ --clip_distance 80 --reg_factor 3.70378
 ```
-## Acknowledgement
-This work was supported in part by Semiconductor Research Corporation (SRC), the Center for Brain-inspired Computing (C-BRIC), JUMP 2.0 PRISM, and the National Science Foundation (NSF) SOPHIA (CCF-1822923). I thank Dr.Jack Sampson and Dr.Mahmut Kandemir for their insightful discussions, and constructive suggestions which enhanced the quality of the paper.
 
