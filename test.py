@@ -1,3 +1,4 @@
+# Adapted from: https://github.com/uzh-rpg/rpg_ramnet/tree/master/RAM_Net
 import os
 import json
 import logging
@@ -107,9 +108,6 @@ def main(args):
     #print(state.keys())
     model = torch.nn.DataParallel(model)
     model = model.to(device)
-    #time1=[] #1
-    #time2=[]
-    starter_train, ender_train = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True) #2
     if args.initial_checkpoint is not None:
         print('Loading initial model weights from: {}'.format(args.initial_checkpoint))
         checkpoint = torch.load(args.path_to_model)
@@ -128,15 +126,9 @@ def main(args):
 
     # construct color mapper, such that same color map is used for all outputs.
     # get groundtruth that is not at the beginning
-    #print(test_dataset[20], len(test_dataset[20]))
     item, dataset_idx= test_dataset[4]
     
     frame = item[0]['depth_image'].cpu().numpy()
-    #print(np.info(frame))
-#    #print("item shape", frame.shape)
-#    
-#    #batch_size = frame.size()[0]
-    #frame = frame[0]
     color_map_inv = np.ones_like(frame[0]) * np.amax(frame[0]) - frame[0]
     #color_map_inv = np.ones_like(frame) * np.amax(frame) - frame
     color_map_inv = np.nan_to_num(color_map_inv, nan=1)
@@ -147,12 +139,8 @@ def main(args):
     normalizer = mpl.colors.Normalize(vmin=color_map_inv.min(), vmax=vmax)
     color_mapper_overall = cm.ScalarMappable(norm=normalizer, cmap='magma')
     color_map_inv = color_mapper_overall.to_rgba(color_map_inv)
-    #print(color_map_inv.shape)
-    #cv2.imwrite('gt_grey_frame_0.png', frame[0][:, :, None] * 255.0)
     color_map = make_colormap(frame, color_mapper_overall)
-    #print(color_map.shape)
-    #cv2.imwrite('color_frame_1.png', color_map_inv*255.0)
-    #exit()    
+
     with torch.no_grad():
         
         idx = 0
@@ -167,48 +155,21 @@ def main(args):
             input = {}
             for key, value in item[0].items():
                 input[key] = value[None, :].to(device)
-#            number of flops
-#            flops = FlopCountAnalysis(model,(input,prev_super_states['image'],prev_states_lstm))
-#            print(flops)
-#            for i in flops.keys():
-#              print(i)
-#            exit()
-#            starter_train.record()
-#            #print("input", input['image'].size())
-            new_predicted_targets= model(input['image'],input['events'])
-#            ender_train.record()
-#            torch.cuda.synchronize()
-#            curr_time = starter_train.elapsed_time(ender_train)
-#            time1.append(curr_time)
-#            
-#            start_time = time.time()
-#            new_predicted_targets= model(input['image'],input['events'])
-#            inf_time = (time.time() - start_time)
-#            time2.append(inf_time)
-            #save mask also
             
             if args.output_folder and sequence_idx > 1:
-                #print("save images")
-                # don't save the first 2 predictions such that the temporal dependencies of the network are settled.
                 groundtruth = input['depth_image']
-                #mask = input['nan_mask']
-                #print("shape", new_predicted_targets.size(), groundtruth.size())
                 metrics = eval_metrics(new_predicted_targets, groundtruth)
                 total_metrics.append(metrics)
-                #print("metrics of index ", idx, ": ", metrics)
                 img = new_predicted_targets[0].cpu().numpy()
                 # save depth image
-                depth_dir_key = join(depth_dir,'depth')
-                #print(depth_dir_key)
+                depth_dir_key = join(depth_dir,'depth') 
                 ensure_dir(depth_dir_key)
                 cv2.imwrite(join(depth_dir_key, 'frame_{:010d}.png'.format(idx)),img[0][:, :, None] * 255.0)
-                #print("save depth")
                 # save numpy
                 npy_dir_key = join(npy_dir, 'depth')
                 ensure_dir(npy_dir_key)
                 data = img
                 np.save(join(npy_dir_key, 'depth_{:010d}.npy'.format(idx)), data)
-
                 #save color map
                 color_map_dir_key = join(color_map_dir, 'depth')
                 ensure_dir(color_map_dir_key)
@@ -232,11 +193,6 @@ def main(args):
                         gt_dir_npy_key = join(gt_dir_npy, 'gt')
                         ensure_dir(gt_dir_npy_key)
                         np.save(join(gt_dir_npy_key, 'frame_{:010d}.npy'.format(idx)), img)
-                        
-                        # save mask
-                        #mask = mask.cpu().numpy()
-                        #np.save(join(masks, 'mask_{:010d}.npy'.format(idx)),mask)
-                        #exit()
                     elif 'semantic' in key:
                         # save semantic seg numpy array
                         img = value[0].cpu().numpy()[0]
@@ -256,21 +212,6 @@ def main(args):
             idx += 1
             #print(sequence_idx, idx)
             
-        # total metrics:
-#        new_list = time1[1:]
-#        mean = statistics.mean(new_list)
-#        median = statistics.median(new_list)
-#        print("time1",mean, median)
-#        print("time2",time2)
-#        inference_time = sum(time2)/N
-#        # Calculate throughput
-#        throughput = N/ (inference_time)
-#        print("Inference Time: {:.6f} seconds".format(inference_time))
-#        print("Throughput: {:.2f} samples/second".format(throughput))
-#        print("Model Size: {:.2f} MB".format(model_size))
-        #print("total metrics: ", np.sum(np.array(total_metrics), 0) / len(total_metrics))
-
-
 if __name__ == '__main__':
     logger = logging.getLogger()
 
@@ -279,7 +220,7 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_model', type=str,
                         help='path to the model weights',
                         default='')
-    parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/mvsec_dataset/", type=str, help="data folder path")
+    parser.add_argument('--data_path', default = "", type=str, help="data folder path")
     parser.add_argument('--output_folder', type=str,
                         help='path to folder for saving outputs',
                         default='')
