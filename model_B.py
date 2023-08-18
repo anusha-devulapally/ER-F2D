@@ -12,7 +12,7 @@ class transformer_encoder_decoder(nn.Module):
     
     self.patch_embed_rgb = PatchEmbed(img_size=img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model)
     
-    self.patch_embed_events = PatchEmbed(img_size = img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model) # I added 5 frames in voxels to 1.
+    self.patch_embed_events = PatchEmbed(img_size = img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model) 
     
     self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed_rgb.n_patches + self.patch_embed_events.n_patches,d_model))
     
@@ -60,9 +60,7 @@ class transformer_encoder_decoder(nn.Module):
     n_samples = rgb.shape[0] 
     x_rgb = self.patch_embed_rgb(rgb)
     events = self.conv_lstm_encoder_events(events)
-    #exit()
     x_events = self.patch_embed_events(events)
-
     x = torch.cat((x_rgb, x_events), dim=1)
     x=x+self.pos_embed
     x=self.pos_drop(x)
