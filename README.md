@@ -30,7 +30,7 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 70 --batch_size 16
 ## Testing
 Testing is done in two steps. First, is to run test.py script, which saves the prediction outputs in a folder. 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python test.py --path_to_model experiments/exp_5_rgb/checkpoints/model_best.pth.tar --output_folder experiments/exp_5_rgb/test/ --data_folder test 
+CUDA_VISIBLE_DEVICES=0 python test.py --path_to_model experiments/exp_1/checkpoints/model_best.pth.tar --output_folder experiments/exp_1/test/ --data_folder test 
 ```
 Later, we run evaluation.py script takes both the groundtruth and prediction output as inputs, and calculates the metric depth on logarithmic depth maps using both clip distance and reg_factor. 
 ```bash
