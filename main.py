@@ -44,8 +44,8 @@ from utils.data_augmentation import Compose, RandomRotationFlip, RandomCrop, Cen
 def get_args_parser():
   parser = argparse.ArgumentParser('Transformer arguments', add_help=False)
   #dataloader args
-  parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
-  parser.add_argument('--val_data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
+  parser.add_argument('--data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
+  parser.add_argument('--val_data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
   parser.add_argument('--batch_size', default=16, type=int)
   parser.add_argument('--num_worker', default=4, type=int)
   parser.add_argument('--device', default='cuda', help='device to use for train and test, cpu or cuda')
