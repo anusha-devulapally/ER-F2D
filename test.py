@@ -5,7 +5,7 @@ import logging
 import argparse
 import torch
 import statistics
-from model_B import *
+from model import *
 from metrics import *
 from data_loader.dataset import *
 from torch.utils.data import DataLoader
