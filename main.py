@@ -6,7 +6,7 @@ import torch.nn
 from utils.path_utils import ensure_dir
 from torch.utils.data import DataLoader
 from dataloader import build_dataset
-from model_B import *
+from model import *
 from misc import *
 from metrics import *
 from torch.utils.tensorboard import SummaryWriter
