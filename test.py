@@ -155,7 +155,7 @@ def main(args):
             input = {}
             for key, value in item[0].items():
                 input[key] = value[None, :].to(device)
-            
+            new_predicted_targets = model(input['image'], input['events'])
             if args.output_folder and sequence_idx > 1:
                 groundtruth = input['depth_image']
                 metrics = eval_metrics(new_predicted_targets, groundtruth)
