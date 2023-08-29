@@ -5,7 +5,7 @@ Dataset classes
 
 from torch.utils.data import Dataset
 from .event_dataset import VoxelGridDataset, FrameDataset
-from .dataset_asynchronous import SynchronizedFramesEventsRawDataset
+#from .dataset_asynchronous import SynchronizedFramesEventsRawDataset
 from skimage import io
 from os.path import join
 import numpy as np
