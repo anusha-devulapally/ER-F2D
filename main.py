@@ -110,10 +110,10 @@ def main(args):
   model = build_model(args)
 
   if args.inital_checkpoint:
-    #p=torch.load('pretrained_weights_updated_from_vitbase.pth')
-    #pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p)
-    p=torch.load('dense_model_best.pth.tar')
-    pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p['state_dict'])
+    p=torch.load('pretrained_weights_updated_from_vitbase.pth')
+    pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p)
+    #p=torch.load('dense_model_best.pth.tar')
+    #pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p['state_dict'])
     model.load_state_dict(pretrained_model_weights)
     
   
