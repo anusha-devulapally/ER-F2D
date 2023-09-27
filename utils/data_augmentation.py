@@ -1,8 +1,11 @@
 import torch
 import torch.nn.functional as F
+#import torchvision.transforms.functional as F1
 from math import sin, cos, pi
 import numbers
 import random
+#import numpy as np
+#import torchvision.transforms as transforms
 
 """
     Data augmentation functions.
@@ -215,3 +218,64 @@ class RandomRotationFlip(object):
         format_string += ', p_vlip={:.2f}'.format(self.p_vflip)
         format_string += ')'
         return format_string
+
+"""
+class ZoomTransform(object):
+    def __init__(self, zoom_factor, apply_probability):
+        self.zoom_factor = zoom_factor
+        self.apply_probability = apply_probability
+
+    def __call__(self, img, is_flow=False):
+        if random.random() < self.apply_probability:
+            if img.size(0) == 1:
+                # For single-channel image (1, H, W)
+                new_width = int(img.size(2) * self.zoom_factor)
+                new_height = int(img.size(1) * self.zoom_factor)
+            else:
+                # For multi-channel image (C, H, W)
+                new_width = int(img.size(2) * self.zoom_factor)
+                new_height = int(img.size(1) * self.zoom_factor)
+
+            # Apply the zooming transformation using bilinear interpolation
+            zoomed_img = F.interpolate(img.unsqueeze(0), size=(new_height, new_width), mode='bilinear', align_corners=False).squeeze(0)
+
+            # Calculate cropping bounds to achieve the target size (224, 224)
+            crop_left = (new_width - 224) // 2
+            crop_top = (new_height - 224) // 2
+
+            # Apply cropping
+            cropped_img = zoomed_img[:, crop_top:crop_top + 224, crop_left:crop_left + 224]
+
+            return cropped_img
+        else:
+            return img
+
+                    
+from torchvision.transforms import ToPILImage
+
+
+class PixelShiftTransform(object):
+    def __init__(self, max_shift, apply_probability):
+        self.max_shift = max_shift
+        self.apply_probability = apply_probability
+        # self.to_pil = ToPILImage()
+
+    def __call__(self, img, is_flow=False):
+
+        if random.random() < self.apply_probability:
+            # Generate random pixel shifts for x and y directions
+            shift_x = random.randint(-self.max_shift, self.max_shift)
+            shift_y = random.randint(-self.max_shift, self.max_shift)
+            # print("img", img.size())
+            shifted_channels = []
+            for channel in img:
+                channel = transforms.ToPILImage()(channel)
+                shifted_channel = F1.affine(channel, angle=0, translate=(shift_x, shift_y), scale=1, shear=0)
+                shifted_channel = transforms.ToTensor()(shifted_channel)
+                # print("shift", shifted_channel.squeeze(0).size())
+                shifted_channels.append(shifted_channel.squeeze(0))
+            shifted_img = torch.stack(shifted_channels, dim=0)
+            # print("shifted",shifted_img.size())
+            return shifted_img
+        else:
+            return img"""

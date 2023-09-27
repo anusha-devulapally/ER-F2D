@@ -8,30 +8,41 @@ from utils import *
 from torchvision import utils
 from kornia.filters.sobel import spatial_gradient, sobel
 from utils.path_utils import ensure_dir
-int_path = os.path.join('analysis_exps/exp_24', 'intermediate_results')
+int_path = os.path.join('fix/exp_23_rerun', 'intermediate_results')
 print(int_path)
+
 ensure_dir(int_path)
+
+
 def imgrad(img):
     img = torch.mean(img, 1, True)
     fx = np.array([[1,0,-1],[2,0,-2],[1,0,-1]])
     conv1 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
     weight = torch.from_numpy(fx).float().unsqueeze(0).unsqueeze(0)
-
+    # if img.is_cuda:
     weight = weight.cuda()
     conv1.weight = nn.Parameter(weight)
     grad_x = conv1(img)
+
     fy = np.array([[1,2,1],[0,0,0],[-1,-2,-1]])
     conv2 = nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1, bias=False)
     weight = torch.from_numpy(fy).float().unsqueeze(0).unsqueeze(0)
+    # if img.is_cuda:
     weight = weight.cuda()
     conv2.weight = nn.Parameter(weight)
-    grad_y = conv2(img)    
+    grad_y = conv2(img)
+
+#     grad = torch.sqrt(torch.pow(grad_x,2) + torch.pow(grad_y,2))
+    
     return grad_y, grad_x
 
 def imgrad_yx(img):
     N,C,_,_ = img.size()
-    is_nan = torch.isnan(img)
+    #is_nan = torch.isnan(img)
+    #print("yx",is_nan)
     grad_y, grad_x = imgrad(img)
+    #print("grads",grad_y, grad_x)
+    #print(torch.isnan(grad_y), torch.isnan(grad_x))
     return torch.cat((grad_y.view(N,C,-1), grad_x.view(N,C,-1)), dim=1)
 
 
@@ -55,6 +66,7 @@ class NormalLoss(nn.Module):
 def scale_invariant_loss(y_input, y_target, weight = 1.0, n_lambda = 1.0):
     log_diff = y_input - y_target
     is_nan = torch.isnan(log_diff)
+    #print("scale", is_nan)
     return weight * ((log_diff[~is_nan]**2).mean()-(n_lambda*(log_diff[~is_nan].mean())**2))
  
 
@@ -92,6 +104,9 @@ class MultiScaleGradient(torch.nn.Module):
                 is_not_nan_sum = (~is_nan).sum()
                 # output of kornia spatial gradient is [B x C x 2 x H x W]
                 loss_value += torch.abs(delta_diff[~is_nan]).sum()/is_not_nan_sum*target.shape[0]*2
+                # * batch size * 2 (because kornia spatial product has two outputs).
+                # replaces the following line to be able to deal with nan's.
+                # loss_value += torch.abs(delta_diff).mean(dim=(3,4)).sum()
 
         if preview:
             return record
@@ -138,11 +153,17 @@ def loading_weights_from_eventscape(model_state_dict,p):
   main_keys = main.keys()
   #print(main_keys, p.keys())
   for k,v in main.items():
-    #if('patch_embed_rgb' in k):# or 'conv_skip_rgb' in k):
-    #  continue
+    if('patch_embed' in k):# or 'conv_skip_rgb' in k):
+      continue
     c='module.'+k
     if c in p.keys():
+      #print("modified keys", k)
+      #print("before", main[k])
       main[k]=p[c]
+      #print("after",main[k])
+    #else:
+    #  print("skipped keys:", k)
+  
   return main
   
   
@@ -153,5 +174,12 @@ def loading_weights_from_vit(model_state_dict, p):
   #print(main_keys)
   for k,v in main.items():
     if k in p.keys():
+    
+      #print("modified keys", k)
+      #print("before", main[k])
       main[k]=p[k]
+      #print("after",main[k])
+    #else:
+      #print("skipped keys:", k)
+  
   return main

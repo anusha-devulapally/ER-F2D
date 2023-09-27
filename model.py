@@ -12,7 +12,7 @@ class transformer_encoder_decoder(nn.Module):
     
     self.patch_embed_rgb = PatchEmbed(img_size=img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model)
     
-    self.patch_embed_events = PatchEmbed(img_size = img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model) 
+    self.patch_embed_events = PatchEmbed(img_size = img_size, patch_size=patch_size, in_chans=1, embed_dim=d_model)
     
     self.pos_embed = nn.Parameter(torch.zeros(1, self.patch_embed_rgb.n_patches + self.patch_embed_events.n_patches,d_model))
     
@@ -59,8 +59,10 @@ class transformer_encoder_decoder(nn.Module):
   def forward(self, rgb, events):
     n_samples = rgb.shape[0] 
     x_rgb = self.patch_embed_rgb(rgb)
-    events = self.conv_lstm_encoder_events(events)
+    events= self.conv_lstm_encoder_events(events)
+    #exit()
     x_events = self.patch_embed_events(events)
+
     x = torch.cat((x_rgb, x_events), dim=1)
     x=x+self.pos_embed
     x=self.pos_drop(x)
@@ -71,10 +73,9 @@ class transformer_encoder_decoder(nn.Module):
     x_rgb = self.token_fold(x[:,:-196,:].transpose(1,2))
     x_events = self.token_fold(x[:,196:,:].transpose(1,2))
     
-    x_rgb =  self.conv_fold_rgb(x_rgb)+ self.conv_skip_rgb(rgb)
-    x_events = self.conv_fold_events(x_events)+ self.conv_skip_events(events) 
-    x = self.conv_fusion_events(x_events)+self.conv_fusion_rgb(x_rgb) 
-    
+    x_rgb = self.conv_skip_rgb(rgb) + self.conv_fold_rgb(x_rgb) 
+    x_events =self.conv_skip_events(events) + self.conv_fold_events(x_events)
+    x = self.conv_fusion_rgb(x_rgb) + self.conv_fusion_events(x_events)
     x = self.RRDB(x)
     x = self.conv(x)
 

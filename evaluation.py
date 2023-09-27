@@ -1,4 +1,3 @@
-# Adapted from https://github.com/uzh-rpg/rpg_ramnet/tree/master/RAM_Net
 import numpy as np
 import torch
 import argparse
@@ -135,6 +134,23 @@ def rescale_by_the_median(target, prediction, debug = False):
         print("target max[adjusted]:", np.max(target))
         print("prediction min[adjusted]:", np.min(prediction))
         print("prediction max[adjusted]:", np.max(prediction))
+        
+    #if np.min(target) < 0:
+    #    target += np.min(target)
+    #elif np.min(target) > 0:
+    #    target -= np.min(target)
+    #if np.min(prediction) < 0:
+    #    prediction += np.min(prediction)
+    #elif np.min(prediction) > 0:
+    #    prediction += np.min(prediction)
+
+    
+    #if debug:
+    #    print("target max[adjusted]:", np.max(target))
+    #    print("prediction max[adjusted]:", np.max(prediction))
+    #    print("target min[adjusted]:", np.min(target))
+    #    print("prediction min[adjusted]:", np.min(prediction))
+
     return target, prediction
 
 def display_high_contrast_colormap (idx, target, prediction, prefix="", colormap = 'terrain', debug=False, folder_name=None):
@@ -295,6 +311,15 @@ if __name__ == "__main__":
         event_frame_files = sorted(glob.glob(join(flags.event_masks, '*png')))
         event_frame_files = event_frame_files[flags.prediction_offset:]
 
+    #prediction_timestamps = np.genfromtxt(join(flags.predictions_dataset, 'data/timestamps.txt'))
+    #target_timestamps = np.genfromtxt(join(flags.target_dataset, 'data/timestamps.txt'))
+
+    # Information about the dataset length
+    #print("len of prediction files", len(prediction_files))
+    #print("len of target files", len(target_files))
+    #print(flags.predictions_dataset)
+    #print(flags.target_dataset)
+
     if flags.event_masks is not "":
         print("len of events files", len(event_frame_files))
 
@@ -342,7 +367,7 @@ if __name__ == "__main__":
         metrics2.append(eval_metrics(predicted_depth, target_depth))
 
         for depth_threshold in depth_values:
-            depth_threshold_mask = target_depth < depth_threshold#(np.nan_to_num(target_depth) < depth_threshold)
+            depth_threshold_mask = (np.nan_to_num(target_depth) < depth_threshold)# target_depth < depth_threshold
             #print("depth mask", depth_threshold_mask)
             #exit()
             add_to_metrics(-1, metrics, target_depth, predicted_depth, depth_mask & depth_threshold_mask,
@@ -371,7 +396,7 @@ if __name__ == "__main__":
 
 
     {print("%s : %f" % (k, v/num_it)) for k,v in metrics.items()}
-    print("----------------------------------------------")
+    #print("----------------------------------------------")
     #{print ("%f" % (v/num_it)) for _,v in metrics.items()}
 
-    print("total metrics: ", np.sum(np.array(metrics2), 0) / len(metrics2))
+    #print("total metrics: ", np.sum(np.array(metrics2), 0) / len(metrics2))

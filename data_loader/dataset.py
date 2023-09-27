@@ -42,6 +42,7 @@ class SequenceSynchronizedFramesEventsDataset(Dataset):
         assert(step_size > 0)
         assert(clip_distance > 0)
         self.L = sequence_length
+        print("sequence_length",self.L)
         if not recurrency:
             self.dataset= SynchronizedFramesEventsRawDataset(base_folder, event_folder, depth_folder, frame_folder,
                                                            flow_folder, semantic_folder, start_time, stop_time,
@@ -64,8 +65,8 @@ class SequenceSynchronizedFramesEventsDataset(Dataset):
             self.length = 0
         else:
             self.length = (self.dataset.length - self.L * self.every_x_rgb_frame) // self.step_size\
-                          // self.every_x_rgb_frame + 1
-        #print("length", self.length)
+                          // self.every_x_rgb_frame + 1#-1 # temporal
+        print("length", self.length)
         self.proba_pause_when_running = proba_pause_when_running
         self.proba_pause_when_paused = proba_pause_when_paused
         self.scale_factor = scale_factor
@@ -103,7 +104,6 @@ class SequenceSynchronizedFramesEventsDataset(Dataset):
 
         paused = False
         for n in range(self.L - 1):
-
             # decide whether we should make a "pause" at this step
             # the probability of "pause" is conditioned on the previous state (to encourage long sequences)
             u = np.random.rand()
@@ -126,7 +126,7 @@ class SequenceSynchronizedFramesEventsDataset(Dataset):
                 k += 1
                 item = self.dataset.__getitem__(j + k, seed)
                 sequence.append(item)
-
+        
         # down sample data
         if self.scale_factor < 1.0:
             for data_items in sequence:
@@ -141,6 +141,7 @@ class SequenceSynchronizedFramesEventsDataset(Dataset):
                                                  recompute_scale_factor=False, align_corners=False)
                         item = item[0]
                         data_items[k] = item
+        
         return sequence#, mean_std
 
 
@@ -171,12 +172,11 @@ class SynchronizedFramesEventsDataset(Dataset):
                  use_phased_arch=False,
                  baseline=False,
                  loss_composition=False,
-                 reg_factor=5.7,
+                 reg_factor=3.7,
                  recurrency=True):
         """print((base_folder, event_folder, depth_folder, frame_folder, flow_folder, semantic_folder, \
                  start_time, stop_time, clip_distance, every_x_rgb_frame, \
                  transform, normalize, use_phased_arch, baseline))"""
-
         self.base_folder = base_folder
         self.depth_folder = join(self.base_folder, depth_folder if depth_folder is not None else 'frames')
         self.frame_folder = join(self.base_folder, frame_folder if frame_folder is not None else 'rgb')
@@ -187,7 +187,6 @@ class SynchronizedFramesEventsDataset(Dataset):
                                                   start_time, stop_time,
                                                   transform=self.transform,
                                                   normalize=normalize)
-
         self.eps = 1e-06
         self.clip_distance = clip_distance
         self.use_phased_arch = use_phased_arch
@@ -208,15 +207,15 @@ class SynchronizedFramesEventsDataset(Dataset):
         self.stamps = np.loadtxt(
             join(self.depth_folder, 'timestamps.txt'))[:, 1]
         #print("self.stamps", self.stamps)
-        if self.use_mvsec and not "javi" in self.base_folder:
-            self.stamps = self.stamps[1:]
+        #if self.use_mvsec and not "javi" in self.base_folder:
+        #    self.stamps = self.stamps[1:]
 
         # shift the frame timestamps by the same amount as the event timestamps
         self.stamps -= self.event_dataset.initial_stamp
 
         # length = total number of datapoints, not equal to length of final dataset due to every_x_rgb_frame & step size
-        self.length = len(self.event_dataset)-1
-
+        self.length = len(self.event_dataset)
+        print("self.length", self.length)
         # Check that the frame timestamps are unique and sorted
         assert(np.alltrue(np.diff(self.stamps) > 0)
                ), "frame timestamps are not unique and monotonically increasing"
@@ -234,7 +233,7 @@ class SynchronizedFramesEventsDataset(Dataset):
         assert(i >= 0)
         assert(i < (self.length // self.every_x_rgb_frame))
         item = {}
-        mean_std ={}
+        #mean_std ={}
 
         def rgb2gray(rgb):
             #gray = rgb.sum(axis=2)
@@ -261,18 +260,15 @@ class SynchronizedFramesEventsDataset(Dataset):
             j = i * self.every_x_rgb_frame + k
             #print(j)
             event_timestamp = self.event_dataset.get_stamp_at(j)
-            #print("len event", self.event_dataset.length,self.event_dataset.get_stamp_at(5124) )
-            #print("event_timestamp", event_timestamp)
+            
             # Find the index of the first frame whose timestamp is >= event timestamp
-            #print("len", len(self.stamps))
-            #exit()
             (frame_idx, frame_timestamp) = first_element_greater_than(self.stamps, event_timestamp)
             #print("frame", frame_timestamp)
             #print("event_timestamp, frame_timestamp",event_timestamp, frame_timestamp)
             assert(frame_idx >= 0)
             assert(frame_idx < len(self.stamps))
             #assert(frame_timestamp >= event_timestamp)
-            #assert(frame_timestamp - event_timestamp < 0.00001)
+            assert(frame_timestamp - event_timestamp < 0.00001)
             if seed is None:
                 # if no specific random seed was passed, generate our own.
                 # otherwise, use the seed that was passed to us
@@ -281,21 +277,25 @@ class SynchronizedFramesEventsDataset(Dataset):
             # Get the event tensor from the event dataset loader
             # Note that we pass the transform seed to ensure the same transform is
             if self.baseline != 'rgb':
-                events = self.event_dataset.__getitem__(j, seed)
+                events = self.event_dataset.__getitem__(j, seed) # +1 temporal
 
             # Load numpy depth ground truth frame
+            #print("use mvsec",self.use_mvsec)
             if self.use_mvsec:
+                #print("depth",'depth_{:010d}.npy'.format(frame_idx))
                 frame = np.load(join(self.depth_folder, 'depth_{:010d}.npy'.format(frame_idx))).astype(np.float32)
                 #print(frame)
             else:
-                path_depthframe = glob.glob(self.depth_folder + '/*_{:04d}_depth.npy'.format(frame_idx))
-                frame = np.load(path_depthframe[0]).astype(np.float32)
+                #path_depthframe = glob.glob(self.depth_folder + '/*_{:04d}_depth.npy'.format(frame_idx))
+                #frame = np.load(path_depthframe[0]).astype(np.float32)
+                #print("depth",join(self.depth_folder, 'depth_{:010d}.npy'.format(frame_idx)))
+                frame = np.load(join(self.depth_folder, 'depth_{:010d}.npy'.format(frame_idx))).astype(np.float32)
             # nan values are replaced with zero.(present in outdoor 2 dataset
-            frame=np.where(np.isnan(frame), 0.001, frame)
+            #frame=np.where(np.isnan(frame), 0.001, frame)
             #print("depth shape", depth.shape)
             # Clip to maximum distance
             frame = np.clip(frame, 0.0, self.clip_distance)
-            frame_mean, frame_std = np.mean(frame), np.std(frame)
+            #frame_mean, frame_std = np.mean(frame), np.std(frame)
             # Normalize
             frame = frame / self.clip_distance
             #frame = frame / np.amax(frame[~np.isnan(frame)])
@@ -341,52 +341,35 @@ class SynchronizedFramesEventsDataset(Dataset):
                 if self.use_phased_arch:
                     item['times_events{}'.format(k)] = timestamp
 
-
+            #print("enter")
             if k == self.every_x_rgb_frame - 1:
-                # Get RGB frame
-                #print("self.use_mvsec", self.use_mvsec)
                 if self.frame_folder is not None:
                     try:
                         if self.use_mvsec:
                           #print("=======frame", self.frame_folder,os.listdir(self.frame_folder))
+                          #print("rgb folder",join(self.frame_folder, 'frame_{:010d}.png'.format(frame_idx)))
                           rgb_frame = io.imread(join(self.frame_folder, 'frame_{:010d}.png'.format(frame_idx)),
                                                                           as_gray=False).astype(np.float32)
-                          #print("frame", rgb_frame)
                         else:
-                            path_rgbframe = glob.glob(self.frame_folder + '/*_{:04d}_image.png'.format(frame_idx))
-                            #path_rgbframe = glob.glob(self.frame_folder + '/{:04d}.png'.format(frame_idx))
-                            #print("path frame",path_rgbframe)
-                            #print("frame", gray_frame.shape)
-                            rgb_frame = io.imread(path_rgbframe[0], as_gray=False).astype(np.float32)
-                        
+                            rgb_frame = io.imread(join(self.frame_folder, 'frame_{:010d}.png'.format(frame_idx)),
+                                                                          as_gray=False).astype(np.float32)
                         if len(rgb_frame.shape) > 2:
                             if rgb_frame.shape[2] > 1:
                                 gray_frame = rgb2gray(rgb_frame)  # [H x W]
                         else:
-                            gray_frame = rgb_frame
-
+                          gray_frame = rgb_frame
                         gray_frame /= 255.0  # normalize
                         gray_frame = np.expand_dims(gray_frame, axis=0)  # expand to [1 x H x W]
-#                        gray_frame = rgb_frame
-#                        rgb_mean, rgb_std = np.mean(gray_frame), np.std(gray_frame)
-#                        gray_frame /= 255.0 
-#                        gray_frame = torch.from_numpy(gray_frame)
-                        #print(gray_frame.shape)
                         gray_frame = torch.from_numpy(gray_frame)
-                        #print("gray_frame", gray_frame.size())
                         #gray_frame = gray_frame.permute(2,0,1)
                         if self.transform:
                             random.seed(seed)
                             gray_frame = self.transform(gray_frame)
 
-                        # Combine events with grayscale frames
-                        # events["events"] = torch.cat((events["events"], gray_frame), axis=0)
                     except FileNotFoundError:
                         gray_frame = None
-                
                 item['events'] = events['events']
                 item['image'] = gray_frame
                 item['depth_image'] = frame
                 
-                
-        return item#, mean_std 
+        return item

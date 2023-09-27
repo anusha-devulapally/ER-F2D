@@ -8,7 +8,21 @@ from torch.utils.data import ConcatDataset
 from data_loader.dataset import *
 #from data_loader_uni_norm.dataset import *
 import bisect
-
+""" DATASET Structure
+eventscape_dataset
+- train
+  -- Town01
+      -- sequence0
+          -- rgb
+          -- events
+          -- depth
+  -- Town02
+  -- Town03
+- val
+  -- Town05
+- test
+  -- Town05
+"""
 class ConcatDatasetCustom(ConcatDataset):
     def __getitem__(self, idx):
         if idx < 0:
@@ -22,9 +36,9 @@ class ConcatDatasetCustom(ConcatDataset):
             sample_idx = idx - self.cumulative_sizes[dataset_idx - 1]
         return self.datasets[dataset_idx][sample_idx], dataset_idx
         
-def concatenate_subfolders(base_folder, dataset_type, event_folder, depth_folder, frame_folder, sequence_length,
-                           transform=None, proba_pause_when_running=0.0, proba_pause_when_paused=0.0, step_size=1,
-                           clip_distance=100.0, every_x_rgb_frame=1, normalize=True, scale_factor=1.0,
+def concatenate_subfolders(base_folder, set, dataset_type, event_folder, depth_folder, frame_folder, sequence_length,
+                           transform=None,proba_pause_when_running=0.0, proba_pause_when_paused=0.0, step_size=1,
+                           clip_distance=80.0, every_x_rgb_frame=1, normalize=True, scale_factor=1.0,
                            use_phased_arch=False, baseline=False, loss_composition=False, reg_factor=3.7, dataset_idx_flag=False, recurrency=True):
     """
     Create an instance of ConcatDataset by aggregating all the datasets in a given folder
@@ -32,9 +46,12 @@ def concatenate_subfolders(base_folder, dataset_type, event_folder, depth_folder
     print("entered concatenate_subfolders")
     subfolders = os.listdir(base_folder)
     print('Found {} samples in {}'.format(len(subfolders), base_folder))
-
     train_datasets = []
-    train_datasets.append(eval(dataset_type)(base_folder=base_folder, event_folder=event_folder,
+    for dataset_name in sorted(subfolders):
+      #print(dataset_name)
+      if set in dataset_name:
+        #print("dataset_name",dataset_name)
+        train_datasets.append(eval(dataset_type)(base_folder=join(base_folder,dataset_name), event_folder=event_folder,
                                                  depth_folder=depth_folder,
                                                  frame_folder=frame_folder, 
                                                  sequence_length=sequence_length,
@@ -49,21 +66,28 @@ def concatenate_subfolders(base_folder, dataset_type, event_folder, depth_folder
                                                  use_phased_arch=use_phased_arch,
                                                  baseline=baseline,
                                                  reg_factor=reg_factor, recurrency=recurrency))
-
+    
+    #print(len(train_datasets[0]),len(train_datasets[0][0]),train_datasets[0][0][0]['events'].size()) 
+           
     if dataset_idx_flag == False:
         concat_dataset = ConcatDataset(train_datasets)
+        #print("dataset",len(concat_dataset[0]),concat_dataset[0][0])
     elif dataset_idx_flag == True:
         concat_dataset = ConcatDatasetCustom(train_datasets)
-    return concat_dataset#, means_concat
+        
+    return concat_dataset
 
-event_path = "events/voxels"
-rgb_path = "rgb/davis"
+event_path = "events/voxels"  # for accumulated events. To use voxels path = "events/voxel"
+rgb_path = "rgb/frames"
 gt_path = "depth/data"
+#
+#def rgb2gray(rgb):
+#  return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140]).astype(np.float32)
             
-def build_dataset(set, transform, args):
+def build_dataset(set, transform,args):
    if(set=='train'):
      print("entered build_dataset")
-     dataset = concatenate_subfolders(join(args.data_path, set),
+     dataset = concatenate_subfolders(args.data_path, set,
                                            "SequenceSynchronizedFramesEventsDataset",
                                            event_path,
                                            gt_path,
@@ -83,8 +107,10 @@ def build_dataset(set, transform, args):
                                            reg_factor=args.reg_factor,
                                            recurrency = "False"
                                            )
-   elif(set=='validation'):
-     dataset = concatenate_subfolders(join(args.data_path, set),
+     #print("train_dataset",len(dataset[0]),dataset[0][0]['events'].size())
+     #exit()
+   elif(set=='valid'):
+     dataset = concatenate_subfolders(args.data_path,set,
                                            "SequenceSynchronizedFramesEventsDataset",
                                            event_path,
                                            gt_path,

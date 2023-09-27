@@ -19,16 +19,15 @@ class EventDataset(Dataset):
         self.base_folder = base_folder
         self.event_folder = join(self.base_folder, event_folder)
         self.transform = transform
-
         self.start_time = start_time
         self.stop_time = stop_time
 
         self.normalize = normalize
-
-        #if "mvsec" in base_folder or "javi" in base_folder:
-        self.use_mvsec = True
-        #else:
-        #    self.use_mvsec = False
+        
+        if "mvsec" in base_folder or "javi" in base_folder:
+          self.use_mvsec = True
+        else:
+            self.use_mvsec = False
 
         self.read_timestamps()
 
@@ -133,18 +132,19 @@ class VoxelGridDataset(EventDataset):
     def __getitem__(self, i, transform_seed=None):
         assert(i >= 0)
         assert(i < self.length)
-
         if transform_seed is None:
             transform_seed = random.randint(0, 2**32)
 
         # event_tensor will be a [num_bins x H x W] floating point array
         # event_tensor = np.load(join(self.event_folder, 'event_tensor_{:010d}.npy'.format(self.first_valid_idx + i)))
         if self.use_mvsec:
+            #print("event folder", join(self.event_folder, 'event_tensor_{:010d}.npy'.format(self.first_valid_idx + i)))
             event_tensor = np.load(join(self.event_folder, 'event_tensor_{:010d}.npy'.format(self.first_valid_idx + i)))
+            
         else:
-            path_event = glob.glob(self.event_folder + '/*_{:04d}_voxel.npy'.format(self.first_valid_idx + i))
-            event_tensor = np.load(path_event[0])
-        #print("event tensor",event_tensor.shape)
+            #path_event = glob.glob(self.event_folder + '/*_{:04d}_voxel.npy'.format(self.first_valid_idx + i))
+            #event_tensor = np.load(path_event[0])
+            event_tensor = np.load(join(self.event_folder, 'event_tensor_{:010d}.npy'.format(self.first_valid_idx + i)))
         if self.normalize:
             # normalize the event tensor (voxel grid) in such a way that the mean and stddev of the nonzero values
             # in the tensor are equal to (0.0, 1.0)

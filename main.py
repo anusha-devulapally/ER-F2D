@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import torch
 import torch.nn 
+from torch.autograd import Variable
 from utils.path_utils import ensure_dir
 from torch.utils.data import DataLoader
 from dataloader import build_dataset
@@ -23,7 +24,7 @@ def get_model_size(model):
     return size_mb
     
 # tensorboard and logging directories
-checkpoint_dir = "analysis_exps/exp_24"
+checkpoint_dir = "fix/exp_23_rerun"
 print(checkpoint_dir)
 ensure_dir(checkpoint_dir)
 tensorboard_logdir = os.path.join(checkpoint_dir, 'tensorboard')
@@ -44,8 +45,8 @@ from utils.data_augmentation import Compose, RandomRotationFlip, RandomCrop, Cen
 def get_args_parser():
   parser = argparse.ArgumentParser('Transformer arguments', add_help=False)
   #dataloader args
-  parser.add_argument('--data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
-  parser.add_argument('--val_data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
+  parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/dense_Dataset/", type=str, help="data folder path")
+  parser.add_argument('--val_data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/dense_Dataset/", type=str, help="data folder path")
   parser.add_argument('--batch_size', default=16, type=int)
   parser.add_argument('--num_worker', default=4, type=int)
   parser.add_argument('--device', default='cuda', help='device to use for train and test, cpu or cuda')
@@ -96,7 +97,7 @@ def main(args):
   #dataloader
   train_dataset = build_dataset(set="train", transform= Compose([RandomRotationFlip(0.0, 0.5, 0.0),RandomCrop(224)]),args=args)
   #print(train_dataset)
-  val_dataset = build_dataset(set="validation", transform =CenterCrop(224), args=args) #
+  val_dataset = build_dataset(set="valid", transform =CenterCrop(224), args=args) #
 
   train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers = args.num_worker)
   val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers = args.num_worker)
@@ -110,6 +111,7 @@ def main(args):
   model = build_model(args)
 
   if args.inital_checkpoint:
+    print("enter inital checkpoint")
     p=torch.load('pretrained_weights_updated_from_vitbase.pth')
     pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p)
     #p=torch.load('dense_model_best.pth.tar')
@@ -133,6 +135,7 @@ def main(args):
   #criterion_si = scale_invariant_loss
   criterion_normal = NormalLoss()
   grad_criterion = multi_scale_grad_loss
+  #ssim_criterion = ssim
   # training
   print("start training")
   logging.info('start_training')
@@ -163,9 +166,16 @@ def main(args):
       gen_features = imgrad_yx(output)
       real_features = imgrad_yx(gt)
       n_loss = criterion_normal(gen_features, real_features)
-      #loss = si_loss+0.5*n_loss+0.25*grad_loss
-      loss = 0.5* l_loss+n_loss+ 0.25*grad_loss
-      #loss = 0.5* l_loss+n_loss
+      #img1 = Variable(output[~is_nan],  requires_grad=False)
+      #img2 = Variable(gt[~is_nan], requires_grad = True)
+      #print("img", img1.size(), img2.size(), type(img1), type(img2))
+      # Functional: pytorch_ssim.ssim(img1, img2, window_size = 11, size_average = True)
+      #ssim_loss = 1-pytorch_ssim.ssim(img1, img2).item()
+      #ssim_loss = ssim_criterion(output[~is_nan], gt[~is_nan])
+      #loss = si_loss+0.5*grad_loss + 0.05*ssim_loss
+      #loss = si_loss+0.4*n_loss#+0.25*grad_loss
+      #loss = 0.7* l_loss+n_loss+ 0.25*grad_loss
+      loss = l_loss+0.4*n_loss + 0.25*grad_loss
       #print("lossses", l_loss, n_loss)
       #loss = si_loss + 0.25*grad_loss#+0.5*n_loss
       #print("train loss", loss)
@@ -203,15 +213,21 @@ def main(args):
         #val_si_loss = criterion_si(output, gt)#, mask)
         val_grad_loss = grad_criterion(output, gt)#, mask)
         is_nan=torch.isnan(gt)
+        #img1 = Variable(output[~is_nan],  requires_grad=False)
+        #img2 = Variable(gt[~is_nan], requires_grad = True)
+
+        # Functional: pytorch_ssim.ssim(img1, img2, window_size = 11, size_average = True)
+        #val_ssim_loss = 1-pytorch_ssim.ssim(img1, img2).item()
+        #val_ssim_loss = ssim_criterion(output[~is_nan], gt[~is_nan])
         val_l_loss = criterion(output[~is_nan], gt[~is_nan])
         gen_features = imgrad_yx(output)#, mask)
         real_features = imgrad_yx(gt)#, mask)
         val_n_loss = criterion_normal(gen_features, real_features)
-        #val_loss = 0.5*val_l_loss + val_n_loss
-        val_loss = 0.5*val_l_loss + val_n_loss +0.25*val_grad_loss
-        #val_loss = val_si_loss +0.5* val_n_loss +0.25*val_grad_loss
+        val_loss = val_l_loss + 0.4* val_n_loss + 0.25*val_grad_loss
+        #val_loss = 0.7*val_l_loss +val_n_loss +0.25*val_grad_loss
+        #val_loss = val_si_loss +0.4* val_n_loss #+0.25*val_grad_loss
         #val_loss = val_si_loss + 0.25*val_grad_loss#+0.5*val_n_loss
-
+        #val_loss = val_si_loss + 0.5*val_grad_loss + 0.05*val_ssim_loss
         total_val_loss+=val_loss.item()
         
         # metrics

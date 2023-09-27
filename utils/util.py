@@ -22,7 +22,7 @@ def first_element_greater_than(values, req_value):
     i = np.searchsorted(values, req_value)
     #print("value i",values[i],i,req_value)
     #print("i", i, values[i], values[i-1])
-    if abs(values[i] - req_value) > 0.01 and i>0:
+    if abs(values[i] - req_value) > 0.01:# and i>0:
         # for mvsec, depth timestamps aren't always bigger than the event timestamps. This can lead to choosing a
         # value that that is too large, which is fixed here.
         i = i - 1

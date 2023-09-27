@@ -1,5 +1,5 @@
-# Adapted from https://github.com/uzh-rpg/rpg_ramnet/tree/master/RAM_Net
 from sklearn.metrics import mean_squared_error
+#from skimage.measure import compare_ssim as ssim
 from skimage.metrics import structural_similarity as ssim
 import torch
 import numpy as np
