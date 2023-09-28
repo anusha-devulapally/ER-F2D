@@ -175,7 +175,7 @@ def main(args):
       #loss = si_loss+0.5*grad_loss + 0.05*ssim_loss
       #loss = si_loss+0.4*n_loss#+0.25*grad_loss
       #loss = 0.7* l_loss+n_loss+ 0.25*grad_loss
-      loss = l_loss+0.4*n_loss + 0.25*grad_loss
+      loss = l_loss+0.5*n_loss + 0.25*grad_loss
       #print("lossses", l_loss, n_loss)
       #loss = si_loss + 0.25*grad_loss#+0.5*n_loss
       #print("train loss", loss)
@@ -223,7 +223,7 @@ def main(args):
         gen_features = imgrad_yx(output)#, mask)
         real_features = imgrad_yx(gt)#, mask)
         val_n_loss = criterion_normal(gen_features, real_features)
-        val_loss = val_l_loss + 0.4* val_n_loss + 0.25*val_grad_loss
+        val_loss = val_l_loss + 0.5* val_n_loss + 0.25*val_grad_loss
         #val_loss = 0.7*val_l_loss +val_n_loss +0.25*val_grad_loss
         #val_loss = val_si_loss +0.4* val_n_loss #+0.25*val_grad_loss
         #val_loss = val_si_loss + 0.25*val_grad_loss#+0.5*val_n_loss
