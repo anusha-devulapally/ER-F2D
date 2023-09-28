@@ -24,12 +24,13 @@ You can install these packages using the following command:
 pip install -r requirements.txt
 ```
 ## Training
+Download the vit-base inital checkpoints to train the model [here](https://drive.google.com/file/d/18Azic_56AHn_ysWlmSKOmVM6sjXE_0UG/view?usp=drive_link).
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 70 --batch_size 16
+CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 40 --batch_size 16 --num_enc_dec_layers 6 --lr 0.0001
 ```
 ## Testing
 Testing is done in two steps. First, is to run test.py script, which saves the prediction outputs in a folder. 
-Download the pre-trained weights of the transformer-based model [here](https://drive.google.com/file/d/1KYCtYh3MY5kKenD-WhqhH_QsdyGlDT4v/view?usp=sharing).
+Download the pre-trained weights of the transformer-based model [here](https://drive.google.com/file/d/1qVqgdh42JEkXfP37tWP5UDEjyoeGXXxq/view?usp=drive_link).
 ```bash
 CUDA_VISIBLE_DEVICES=0 python test.py --path_to_model experiments/exp_1/checkpoints/model_best.pth.tar --output_folder experiments/exp_1/test/ --data_folder test 
 ```
