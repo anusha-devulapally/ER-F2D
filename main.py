@@ -23,9 +23,12 @@ def get_model_size(model):
     return size_mb
     
 # tensorboard and logging directories
-checkpoint_dir = "analysis_exps/exp_24"
+checkpoint_dir = "experiments/exp_1"
 print(checkpoint_dir)
 ensure_dir(checkpoint_dir)
+int_path = os.path.join(checkpoint_dir, 'intermediate_results')
+print(int_path)
+ensure_dir(int_path)
 tensorboard_logdir = os.path.join(checkpoint_dir, 'tensorboard')
 ensure_dir(tensorboard_logdir)
 modellog_logdir = os.path.join(checkpoint_dir, 'checkpoints')
@@ -101,19 +104,15 @@ def main(args):
   train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers = args.num_worker)
   val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers = args.num_worker)
   train_dataloader_len=0
-  for i in train_dataloader:
-    train_dataloader_len+=1 
-  val_dataloader_len=0
-  for i in val_dataloader:
-     val_dataloader_len+=1     
+  train_dataloader_len=len(train_dataloader.dataset)  
+  val_dataloader_len=len(val_dataloader.dataset)
+    
   # model
   model = build_model(args)
 
   if args.inital_checkpoint:
     p=torch.load('pretrained_weights_updated_from_vitbase.pth')
     pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p)
-    #p=torch.load('dense_model_best.pth.tar')
-    #pretrained_model_weights = loading_weights_from_eventscape(model.state_dict(), p['state_dict'])
     model.load_state_dict(pretrained_model_weights)
     
   
@@ -130,7 +129,6 @@ def main(args):
   print("learning_rate", args.lr)
   #loss
   criterion = torch.nn.L1Loss().to(device)
-  #criterion_si = scale_invariant_loss
   criterion_normal = NormalLoss()
   grad_criterion = multi_scale_grad_loss
   # training
@@ -146,29 +144,18 @@ def main(args):
     # to evaluate time for training
     for batch_idx, sequence in enumerate(train_dataloader):
       rgb,events, gt= sequence[0]['image'].to(device), sequence[0]['events'].to(device), sequence[0]['depth_image'].to(device)
-
-      #print("event",events.size())
-      
       optimizer.zero_grad()
-      #starter_train.record()
       output= model(rgb, events) 
       #loss
       is_nan=torch.isnan(gt)
       l_loss = criterion(output[~is_nan], gt[~is_nan])
-      
-      #si_loss = criterion_si(output,gt)
       grad_loss =grad_criterion(output, gt)
       
       #print("GEN---------------------")
       gen_features = imgrad_yx(output)
       real_features = imgrad_yx(gt)
       n_loss = criterion_normal(gen_features, real_features)
-      #loss = si_loss+0.5*n_loss+0.25*grad_loss
-      loss = 0.5* l_loss+n_loss+ 0.25*grad_loss
-      #loss = 0.5* l_loss+n_loss
-      #print("lossses", l_loss, n_loss)
-      #loss = si_loss + 0.25*grad_loss#+0.5*n_loss
-      #print("train loss", loss)
+      loss = 0.5* l_loss + n_loss + 0.25*grad_loss
       loss.backward()
       optimizer.step()
       #scheduler.step()
@@ -182,35 +169,27 @@ def main(args):
     with torch.no_grad():
       previews=[]
       for preview_idx in preview_indices:
-        #break
         data = train_dataloader.dataset[preview_idx]
-        #print(data)
         rgb,events, gt = torch.unsqueeze(data[0]['image'],0), torch.unsqueeze(data[0]['events'],0), torch.unsqueeze(data[0]['depth_image'],0)
         output = model(rgb, events)
-        #print("rgb, events, gt, output", rgb.size(), events.size(), gt.size(), output.size())
         previews.append(make_preview(rgb,events,gt,output,preview_idx,epoch,mode='train'))
-    # validation code
     
+    # validation code
     model.eval()
     total_val_loss=0
     with torch.no_grad():
       total_metrics = []
       for batch_idx, sequence in enumerate(val_dataloader):
-        #print("batch_idx", batch_idx)
         rgb,events, gt= sequence[0]['image'].to(device), sequence[0]['events'].to(device), sequence[0]['depth_image'].to(device)
         output= model(rgb, events)
         #val loss
-        #val_si_loss = criterion_si(output, gt)#, mask)
-        val_grad_loss = grad_criterion(output, gt)#, mask)
+        val_grad_loss = grad_criterion(output, gt)
         is_nan=torch.isnan(gt)
         val_l_loss = criterion(output[~is_nan], gt[~is_nan])
-        gen_features = imgrad_yx(output)#, mask)
-        real_features = imgrad_yx(gt)#, mask)
+        gen_features = imgrad_yx(output)
+        real_features = imgrad_yx(gt)
         val_n_loss = criterion_normal(gen_features, real_features)
-        #val_loss = 0.5*val_l_loss + val_n_loss
         val_loss = 0.5*val_l_loss + val_n_loss +0.25*val_grad_loss
-        #val_loss = val_si_loss +0.5* val_n_loss +0.25*val_grad_loss
-        #val_loss = val_si_loss + 0.25*val_grad_loss#+0.5*val_n_loss
 
         total_val_loss+=val_loss.item()
         
