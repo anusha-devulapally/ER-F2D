@@ -8,9 +8,7 @@ from utils import *
 from torchvision import utils
 from kornia.filters.sobel import spatial_gradient, sobel
 from utils.path_utils import ensure_dir
-int_path = os.path.join('analysis_exps/exp_24', 'intermediate_results')
-print(int_path)
-ensure_dir(int_path)
+
 def imgrad(img):
     img = torch.mean(img, 1, True)
     fx = np.array([[1,0,-1],[2,0,-2],[1,0,-1]])
@@ -109,7 +107,7 @@ def multi_scale_grad_loss(prediction, target, preview = False):
 def rgb2gray(rgb):
   return np.dot(rgb[...,:3], [0.2989, 0.5870, 0.1140]).astype(np.float32)
                      
-def make_preview(rgb, event,gt, target_pred,preview_idx,epoch,mode):
+def make_preview(int_path, rgb, event,gt, target_pred,preview_idx,epoch,mode):
   if(rgb.size()[1]==3):
     #print("rgb size", rgb.size())
     gray = torch.squeeze(rgb)
@@ -138,20 +136,10 @@ def loading_weights_from_eventscape(model_state_dict,p):
   main_keys = main.keys()
   #print(main_keys, p.keys())
   for k,v in main.items():
-    #if('patch_embed_rgb' in k):# or 'conv_skip_rgb' in k):
-    #  continue
-    c='module.'+k
+    if('patch_embed_events' in k or 'conv_skip_events' in k or 'pos_embed' in k):
+      continue
+    c= k
     if c in p.keys():
       main[k]=p[c]
   return main
   
-  
-def loading_weights_from_vit(model_state_dict, p):
-  main = model_state_dict
-  main_keys = main.keys()
-  #print(main_keys)
-  #print(main_keys)
-  for k,v in main.items():
-    if k in p.keys():
-      main[k]=p[k]
-  return main
