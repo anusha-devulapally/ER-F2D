@@ -24,7 +24,7 @@ You can install these packages using the following command:
 pip install -r requirements.txt
 ```
 ## Training
-Download the pre-trained weights of vit-base [here]().
+Download the pre-trained weights of vit-base [here](https://drive.google.com/file/d/182WFuYtP94Z4cxBdlYjJS7pQbGWkyRWc/view?usp=drive_link).
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 70 --batch_size 16
 ```
