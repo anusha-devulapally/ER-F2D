@@ -172,7 +172,7 @@ def main(args):
         data = train_dataloader.dataset[preview_idx]
         rgb,events, gt = torch.unsqueeze(data[0]['image'],0), torch.unsqueeze(data[0]['events'],0), torch.unsqueeze(data[0]['depth_image'],0)
         output = model(rgb, events)
-        previews.append(make_preview(rgb,events,gt,output,preview_idx,epoch,mode='train'))
+        previews.append(make_preview(int_path, rgb,events,gt,output,preview_idx,epoch,mode='train'))
     
     # validation code
     model.eval()
@@ -210,7 +210,7 @@ def main(args):
           rgb,events, gt = torch.unsqueeze(data[0]['image'],0), torch.unsqueeze(data[0]['events'],0), torch.unsqueeze(data[0]['depth_image'],0)
           #print("rgb, events, gt, output", rgb.size(), events.size(), gt.size(), output.size())
           output = model(rgb, events)
-          val_previews.append(make_preview(rgb,events,gt,output,preview_idx, epoch, mode='val'))
+          val_previews.append(make_preview(int_path, rgb,events,gt,output,preview_idx, epoch, mode='val'))
     avg_metrics = np.sum(np.array(total_metrics),0)/len(total_metrics)
     #current_mse = avg_metrics[0]
     current_mean_error = avg_metrics[0]
