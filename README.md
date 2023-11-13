@@ -23,6 +23,12 @@ You can install these packages using the following command:
 ```bash
 pip install -r requirements.txt
 ```
+## Dataset Download
+[EventScape](https://github.com/uzh-rpg/rpg_ramnet#eventscape)
+[MVSEC](https://daniilidis-group.github.io/mvsec/download/)
+##Pre-trained Weights
+[EventScape](https://drive.google.com/file/d/1jqDCz-r09OhJk6j33spUQlE-Xp3qGqZL/view?usp=sharing)
+[MVSEC](https://drive.google.com/file/d/1KYCtYh3MY5kKenD-WhqhH_QsdyGlDT4v/view?usp=sharing)
 ## Training
 Download the pre-trained weights of vit-base [here](https://drive.google.com/file/d/182WFuYtP94Z4cxBdlYjJS7pQbGWkyRWc/view?usp=drive_link).
 ```bash
@@ -30,7 +36,7 @@ CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 70 --batch_size 16
 ```
 ## Testing
 Testing is done in two steps. First, is to run test.py script, which saves the prediction outputs in a folder. 
-Download the pre-trained weights of the transformer-based models for MVSEC Dataset [here](https://drive.google.com/file/d/1KYCtYh3MY5kKenD-WhqhH_QsdyGlDT4v/view?usp=sharing).
+Download the pre-trained weights of the transformer-based models on the datasets and run the below commands.
 ```bash
 CUDA_VISIBLE_DEVICES=0 python test.py --path_to_model experiments/exp_1/checkpoints/model_best.pth.tar --output_folder experiments/exp_1/test/ --data_folder test 
 ```
