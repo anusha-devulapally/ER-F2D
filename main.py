@@ -47,13 +47,13 @@ from utils.data_augmentation import Compose, RandomRotationFlip, RandomCrop, Cen
 def get_args_parser():
   parser = argparse.ArgumentParser('Transformer arguments', add_help=False)
   #dataloader args
-  parser.add_argument('--data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
-  parser.add_argument('--val_data_path', default = "/home/monocular_depth/ramnet/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
+  parser.add_argument('--data_path', default = "/home/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
+  parser.add_argument('--val_data_path', default = "/home/mvsec_dataset/mvsec_dataset_day2/", type=str, help="data folder path")
   parser.add_argument('--batch_size', default=16, type=int)
   parser.add_argument('--num_worker', default=4, type=int)
   parser.add_argument('--device', default='cuda', help='device to use for train and test, cpu or cuda')
-  parser.add_argument('--clip_distance', default=80, type=int) # for mvsec
-  parser.add_argument('--reg_factor', default=3.7, type=int) # for mvsec
+  parser.add_argument('--clip_distance', default=80, type=int) # this for mvsec and for eventscape change it to 100
+  parser.add_argument('--reg_factor', default=3.7, type=int) # this for mvsec and for eventscape change it to 5.7
   parser.add_argument('--train_step_size', default=8, type=int) # for mvsec training
   parser.add_argument('--val_step_size', default=16, type=int) # for mvsec training
   parser.add_argument('--filters', default=64, type=int)
