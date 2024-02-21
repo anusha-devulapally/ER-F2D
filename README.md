@@ -37,7 +37,7 @@ Download the pre-trained weights of the datasets provided below:
 
 [MVSEC](https://github.com/anusha-devulapally/ER-F2D/releases/download/v.01/model_best.pth.tar)
 ## Training
-Download the pre-trained weights of vit-base [here](https://drive.google.com/file/d/182WFuYtP94Z4cxBdlYjJS7pQbGWkyRWc/view?usp=drive_link).
+Download the pre-trained weights of vit-base [here](https://github.com/anusha-devulapally/ER-F2D/releases/download/v.01/pretrained_weights_updated_from_vitbase.pth).
 ```bash
 CUDA_VISIBLE_DEVICES=0 python3 main.py --epochs 70 --batch_size 16
 ```
