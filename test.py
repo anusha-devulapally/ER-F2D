@@ -305,15 +305,15 @@ if __name__ == '__main__':
     parser.add_argument('--path_to_model', type=str,
                         help='path to the model weights',
                         default='')
-    parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/dense_Dataset/", type=str, help="data folder path")
+    parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/eventscape_dataset/", type=str, help="data folder path")
     parser.add_argument('--output_folder', type=str,
                         help='path to folder for saving outputs',
                         default='')
     parser.add_argument('--data_folder', type=str,
                         help='path to folder of data to be tested',
                         default='')
-    parser.add_argument('--clip_distance', default=80, type=int) # for mvsec
-    parser.add_argument('--reg_factor', default=3.7, type=float) # for mvsec
+    parser.add_argument('--clip_distance', default=1000, type=int) # for mvsec
+    parser.add_argument('--reg_factor', default=5.7, type=float) # for mvsec
     parser.add_argument('--step_size', default=1, type=int) # for mvsec
     parser.add_argument('--num_enc_dec_layers', default=12, type=int,
                         help="Number of encoding and decoding layers in the transformer (depth)")
