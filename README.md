@@ -1,4 +1,4 @@
-# Multi-Modal Fusion of Event and RGB for Monocular Depth Estimation Using Transformer (ER-F2D)
+# [Multi-Modal Fusion of Event and RGB for Monocular Depth Estimation Using Transformer (ER-F2D)](https://openaccess.thecvf.com/content/CVPR2024W/MULA/papers/Devulapally_Multi-Modal_Fusion_of_Event_and_RGB_for_Monocular_Depth_Estimation_CVPRW_2024_paper.pdf)
 <p>
 <img src="img/model_architecture.png" width="900">
 </p>
