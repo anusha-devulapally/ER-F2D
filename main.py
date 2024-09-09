@@ -45,13 +45,13 @@ from utils.data_augmentation import Compose, RandomRotationFlip, RandomCrop, Cen
 def get_args_parser():
   parser = argparse.ArgumentParser('Transformer arguments', add_help=False)
   #dataloader args
-  parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/dense_Dataset/", type=str, help="data folder path")
-  parser.add_argument('--val_data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/dense_Dataset/", type=str, help="data folder path")
+  parser.add_argument('--data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/eventscape_dataset/", type=str, help="data folder path")
+  parser.add_argument('--val_data_path', default = "/home/mdl/akd5994/monocular_depth/ramnet/eventscape_Dataset/", type=str, help="data folder path")
   parser.add_argument('--batch_size', default=16, type=int)
   parser.add_argument('--num_worker', default=4, type=int)
   parser.add_argument('--device', default='cuda', help='device to use for train and test, cpu or cuda')
-  parser.add_argument('--clip_distance', default=80, type=int) # for mvsec
-  parser.add_argument('--reg_factor', default=3.7, type=int) # for mvsec
+  parser.add_argument('--clip_distance', default=1000, type=int) # for mvsec
+  parser.add_argument('--reg_factor', default=5.7, type=int) # for mvsec
   parser.add_argument('--train_step_size', default=8, type=int) # for mvsec training
   parser.add_argument('--val_step_size', default=16, type=int) # for mvsec training
   parser.add_argument('--filters', default=64, type=int)
